@@ -87,6 +87,7 @@ defmodule SsePhoenixPubsub.Server do
 
       {:close} ->
         unsubscribe_sse(pubsub_info)
+        conn
 
       {:EXIT, _from, _reason} ->
         unsubscribe_sse(pubsub_info)
