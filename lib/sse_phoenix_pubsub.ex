@@ -79,7 +79,28 @@ defmodule SsePhoenixPubsub do
 
   """
 
+  alias Phoenix.PubSub
+
   defdelegate stream(conn, pubsub_info, data \\ []),
     to: SsePhoenixPubsub.Server,
     as: :stream
+
+  @spec broadcast(atom(), String.t(), String.t() | list(), atom(), String.t() | nil) :: any()
+  def broadcast(pubsub_name, topic_name, message, type \\ :message, event_name \\ nil) do
+    case type do
+      :message ->
+        PubSub.broadcast(pubsub_name, topic_name, {:data, message})
+
+      :event ->
+        dispatch_event(pubsub_name, topic_name, {:event, event_name, message})
+
+      _ ->
+        {:error, "unknown event type"}
+    end
+  end
+
+  defp dispatch_event(pubsub_name, topic_name, {:event, event_name, message})
+       when is_binary(event_name) do
+    PubSub.broadcast(pubsub_name, topic_name, {:event, "time", message})
+  end
 end

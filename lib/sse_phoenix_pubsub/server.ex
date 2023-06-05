@@ -76,16 +76,12 @@ defmodule SsePhoenixPubsub.Server do
   end
 
   # Listen for Pubsub events (Phoenix Pubsub broadcasts)
-  defp listen_sse(conn, {pubsub_name, _topics} = pubsub_info) do
+  defp listen_sse(conn, {_pubsub_name, _topics} = pubsub_info) do
     receive do
-      {^pubsub_name, data} ->
-        chunk = %Chunk{data: data}
-        send_sse(conn, pubsub_info, chunk)
-
-      {:send_idle} ->
+      :send_idle ->
         send_sse(conn, pubsub_info, keep_alive_chunk())
 
-      {:close} ->
+      :close ->
         unsubscribe_sse(pubsub_info)
         conn
 
@@ -93,14 +89,23 @@ defmodule SsePhoenixPubsub.Server do
         unsubscribe_sse(pubsub_info)
         Process.exit(self(), :normal)
 
+      {:data, data} ->
+        chunk = %Chunk{data: data}
+        send_sse(conn, pubsub_info, chunk)
+
+      {:event, event, data} ->
+        chunk = %Chunk{event: event, data: data}
+        send_sse(conn, pubsub_info, chunk)
+
       _ ->
+        # catch {:plug_conn, :sent}
         listen_sse(conn, pubsub_info)
     end
   end
 
   @spec reset_timeout() :: :ok
   defp reset_timeout do
-    new_ref = Process.send_after(self(), {:send_idle}, Config.keep_alive())
+    new_ref = Process.send_after(self(), :send_idle, Config.keep_alive())
     old_ref = Process.put(:timer_ref, new_ref)
     unless is_nil(old_ref), do: Process.cancel_timer(old_ref)
     :ok
