@@ -80,27 +80,23 @@ defmodule SsePhoenixPubsub do
   """
 
   alias Phoenix.PubSub
+  alias SsePhoenixPubsub.Chunk
 
-  defdelegate stream(conn, pubsub_info, data \\ []),
+  defdelegate stream(conn, pubsub_info, chunk \\ %Chunk{data: []}),
     to: SsePhoenixPubsub.Server,
     as: :stream
 
-  @spec broadcast(atom(), String.t(), String.t() | list(), atom(), String.t() | nil) :: any()
-  def broadcast(pubsub_name, topic_name, message, type \\ :message, event_name \\ nil) do
-    case type do
-      :message ->
-        PubSub.broadcast(pubsub_name, topic_name, {:data, message})
-
-      :event ->
-        dispatch_event(pubsub_name, topic_name, {:event, event_name, message})
-
-      _ ->
-        {:error, "unknown event type"}
-    end
+  @spec broadcast(atom(), String.t(), %Chunk{}) :: any()
+  def broadcast(pubsub_name, topic_name, chunk) do
+    PubSub.broadcast(pubsub_name, topic_name, chunk)
   end
 
-  defp dispatch_event(pubsub_name, topic_name, {:event, event_name, message})
-       when is_binary(event_name) do
-    PubSub.broadcast(pubsub_name, topic_name, {:event, "time", message})
+  @spec build_chunk(String.t() | list(), atom(), String.t() | nil) :: {:ok, %Chunk{}} | {:error, String.t()}
+  def build_chunk(message, type \\ :message, event_name \\ nil) do
+    case type do
+      :message -> {:ok, %Chunk{data: message}}
+      :event -> {:ok, %Chunk{data: message, event: event_name}}
+      _ -> {:error, "unknown event type"}
+    end
   end
 end

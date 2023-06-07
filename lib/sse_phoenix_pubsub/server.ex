@@ -12,7 +12,6 @@ defmodule SsePhoenixPubsub.Server do
 
   @type chunk :: Chunk.t()
   @type chunk_conn :: {:ok, conn()} | {:error, term()}
-  @type chunk_data :: list(String.t())
   @type conn :: Conn.t()
   @type topic :: String.t()
   @type topics :: list(topic())
@@ -23,9 +22,11 @@ defmodule SsePhoenixPubsub.Server do
 
   SsePhoenixPubsub.stream(conn, {MyApp.PubSub, ["time"]})
   """
-  @spec stream(conn(), pubsub_info(), chunk_data()) :: conn()
-  def stream(conn, pubsub_info, data) do
-    chunk = %Chunk{data: data, retry: Config.retry()}
+  @spec stream(conn(), pubsub_info(), chunk()) :: conn()
+  def stream(conn, pubsub_info, chunk) do
+    chunk = %Chunk{retry: Config.retry(), data: []}
+      |> Map.merge(chunk)
+
     {:ok, conn} = init_sse(conn, chunk)
     subscribe_sse(pubsub_info)
 
@@ -89,12 +90,7 @@ defmodule SsePhoenixPubsub.Server do
         unsubscribe_sse(pubsub_info)
         Process.exit(self(), :normal)
 
-      {:data, data} ->
-        chunk = %Chunk{data: data}
-        send_sse(conn, pubsub_info, chunk)
-
-      {:event, event, data} ->
-        chunk = %Chunk{event: event, data: data}
+      %Chunk{} = chunk ->
         send_sse(conn, pubsub_info, chunk)
 
       _ ->
