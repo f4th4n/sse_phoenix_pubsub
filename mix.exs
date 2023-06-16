@@ -39,7 +39,7 @@ defmodule SsePhoenixPubsub.MixProject do
   defp deps do
     [
       {:plug, ">= 1.4.5"},
-      {:phoenix_pubsub, "~> 2.0"},
+      {:phoenix_pubsub, "~> 2.1.3"},
       {:jason, "~> 1.0"},
       {:ex_doc, ">= 0.0.0", only: :dev, runtime: false}
     ]
