@@ -22,9 +22,9 @@ defmodule SsePhoenixPubsub.MixProject do
   defp package do
     [
       name: :sse_phoenix_pubsub,
-      maintainers: ["Vlad Jebelev"],
+      maintainers: ["Wildan Fathan"],
       licenses: ["MIT"],
-      links: %{"GitHub" => "https://github.com/vjebelev/sse_phoenix_pubsub"}
+      links: %{"GitHub" => "https://github.com/f4th4n/sse_phoenix_pubsub"}
     ]
   end
 
